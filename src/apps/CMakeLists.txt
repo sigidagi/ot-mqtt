@@ -1,6 +1,5 @@
-#!/bin/bash
 #
-#  Copyright (c) 2018, The OpenThread Authors.
+#  Copyright (c) 2019, The OpenThread Authors.
 #  All rights reserved.
 #
 #  Redistribution and use in source and binary forms, with or without
@@ -27,48 +26,21 @@
 #  POSSIBILITY OF SUCH DAMAGE.
 #
 
-CLANG_FORMAT_VERSION="clang-format version 9.0"
+cmake_minimum_required (VERSION 3.7)
 
-die()
-{
-    echo " *** ERROR: $*"
-    exit 1
-}
 
-# Aliases are not expanded when the shell is not interactive, unless the
-# expand_aliases shell option is set using shopt.
-shopt -s expand_aliases
+if (${PLATFORM_NAME} STREQUAL nrf52)
+    add_library(libskyhome
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/skyhome.cpp
+    )
 
-if command -v clang-format-9 >/dev/null; then
-    alias clang-format=clang-format-9
-elif command -v clang-format >/dev/null; then
-    case "$(clang-format --version)" in
-        "$CLANG_FORMAT_VERSION"*) ;;
+    target_include_directories(libskyhome
+        PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
 
-        *)
-            die "$(clang-format --version); clang-format 9.0 required"
-            ;;
-    esac
-else
-    die "clang-format 9.0 required"
-fi
-
-clang-format "$@" || die
-
-# ensure EOF newline
-REPLACE=no
-for arg; do
-    case $arg in
-        -i)
-            REPLACE=yes
-            ;;
-    esac
-done
-
-file=$arg
-
-[ $REPLACE != yes ] || {
-    [ -n "$(tail -c1 "$file")" ] && echo >>"$file"
-}
-
-exit 0
+    target_link_libraries(libskyhome
+        PUBLIC
+            otr_frameworks
+    )
+endif()

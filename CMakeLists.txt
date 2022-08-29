@@ -51,6 +51,8 @@ set(FIRST_PARTY_COMPILE_FLAGS
    >
 )
 
+set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
 add_subdirectory(third_party/freertos)
 add_subdirectory(third_party/freertos_portable)
 add_subdirectory(third_party/freertos-addons)
@@ -60,9 +62,8 @@ add_subdirectory(third_party/libjwt)
 add_subdirectory(third_party/lwip)
 add_subdirectory(third_party/mbedtls)
 
-add_subdirectory(examples/apps)
+add_subdirectory(${SRC_DIR}/apps)
 
-set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 add_library(otr_core_utils
     ${SRC_DIR}/core/utils/entropy_utils.c
@@ -105,7 +106,6 @@ target_link_libraries(otr_core
         lwip
 )
 
-
 add_library(otr_frameworks
     ${SRC_DIR}/net/utils/nat64_utils.c
     ${SRC_DIR}/net/utils/time_ntp.cpp
@@ -123,57 +123,34 @@ target_compile_options(otr_frameworks
         ${FIRST_PARTY_COMPILE_FLAGS}
 )
 
-add_executable(ot_cli_${PLATFORM_NAME}
-    ${SRC_DIR}/apps/cli/main.c
-    ${SRC_DIR}/core/io_redirect.c
-)
-
-target_link_libraries(ot_cli_${PLATFORM_NAME}
-    PUBLIC
-        test_app
-)
-
 if (${PLATFORM_NAME} STREQUAL nrf52)
-    add_executable(ot_demo_101
+
+    add_executable(skyhome
         ${SRC_DIR}/apps/cli/main.c
         ${SRC_DIR}/core/io_redirect.c
     )
 
-    target_link_libraries(ot_demo_101
+    target_link_libraries(skyhome
         PUBLIC
-            demo_101
+            libskyhome 
     )
 
-    target_compile_definitions(ot_demo_101
-        PUBLIC
-            __HEAP_SIZE=8192
-            __STACK_SIZE=8192
-    )
-
-    target_compile_definitions(ot_cli_${PLATFORM_NAME}
+    target_compile_definitions(skyhome
         PUBLIC
             __HEAP_SIZE=8192
             __STACK_SIZE=8192
     )
 
     #special link script
-    set_target_properties(ot_cli_${PLATFORM_NAME} PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openthread/repo/examples/platforms/nrf528xx/nrf52840/nrf52840.ld)
-    set_target_properties(ot_cli_${PLATFORM_NAME} PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openthread/repo/examples/platforms/nrf528xx/nrf52840/nrf52840.ld -lc -lnosys -lm -lstdc++")
-    set_target_properties(ot_demo_101 PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openthread/repo/examples/platforms/nrf528xx/nrf52840/nrf52840.ld)
-    set_target_properties(ot_demo_101 PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openthread/repo/examples/platforms/nrf528xx/nrf52840/nrf52840.ld -lc -lnosys -lm -lstdc++")
+    set_target_properties(skyhome PROPERTIES LINK_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openthread/repo/examples/platforms/nrf528xx/nrf52840/nrf52840.ld)
+    set_target_properties(skyhome PROPERTIES LINK_FLAGS "-T ${CMAKE_CURRENT_SOURCE_DIR}/third_party/openthread/repo/examples/platforms/nrf528xx/nrf52840/nrf52840.ld -lc -lnosys -lm -lstdc++")
 
     #build hex file
-    add_custom_command(OUTPUT ot_cli_${PLATFORM_NAME}.hex
-        COMMAND arm-none-eabi-objcopy -O ihex ot_cli_${PLATFORM_NAME} ot_cli_${PLATFORM_NAME}.hex
-        DEPENDS ot_cli_${PLATFORM_NAME}
+    add_custom_command(OUTPUT skyhome.hex
+        COMMAND arm-none-eabi-objcopy -O ihex skyhome skyhome.hex
+        DEPENDS skyhome
     )
-    add_custom_target(ot_cli_nrf52_hex ALL DEPENDS ot_cli_${PLATFORM_NAME}.hex)
-
-    add_custom_command(OUTPUT ot_demo_101.hex
-        COMMAND arm-none-eabi-objcopy -O ihex ot_demo_101 ot_demo_101.hex
-        DEPENDS ot_demo_101
-    )
-    add_custom_target(ot_demo_101_hex ALL DEPENDS ot_demo_101.hex)
+    add_custom_target(skyhome_hex ALL DEPENDS skyhome.hex)
 endif()
 
 set(PORT_DIRS 
