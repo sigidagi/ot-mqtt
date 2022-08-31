@@ -34,6 +34,8 @@
 #include <task.h>
 
 #include "mqtt_client.hpp"
+#include "mqtt_cfg.h"
+#include "ot_cfg.h"
 
 #include <openthread/ip6.h>
 #include <openthread/joiner.h>
@@ -46,6 +48,8 @@
 #include <lwip/tcpip.h>
 
 #include "net/utils/nat64_utils.h"
+
+static claire::IotClientCfg sCloudIotCfg;
 
 #define MSG_MAX_LENGTH 100
 
@@ -62,7 +66,6 @@ static void setupNat64(void)
 
 void setNetworkConfiguration(otInstance *aInstance)
 {
-    static char          aNetworkName[] = "OpenThread-Sigis";
     otOperationalDataset aDataset;
 
     memset(&aDataset, 0, sizeof(otOperationalDataset));
@@ -73,36 +76,29 @@ void setNetworkConfiguration(otInstance *aInstance)
      *     Channel, Channel Mask Page 0, Network Key, PSKc, Security Policy
      */
     
-    //aDataset.mActiveTimestamp.mSeconds             = 1;
-    //aDataset.mActiveTimestamp.mTicks               = 0;
-    //aDataset.mActiveTimestamp.mAuthoritative       = false;
     aDataset.mComponents.mIsActiveTimestampPresent = false;
 
     /* Set Channel */
-    aDataset.mChannel                      = 12;
+    aDataset.mChannel                      = OT_CLAIRE_CHANNEL;
     aDataset.mComponents.mIsChannelPresent = true;
 
     /* Set Pan ID */
-    aDataset.mPanId                      = (otPanId)0xf913;
+    aDataset.mPanId                      = (otPanId)OT_CLAIRE_PANID;
     aDataset.mComponents.mIsPanIdPresent = true;
 
     /* Set Extended Pan ID */
-    uint8_t extPanId[OT_EXT_PAN_ID_SIZE] = {0x73, 0xa7, 0x52, 0x23, 0x03, 0xca, 0x17, 0x66};
-    memcpy(aDataset.mExtendedPanId.m8, extPanId, sizeof(aDataset.mExtendedPanId));
+    memcpy(aDataset.mExtendedPanId.m8, OT_CLAIRE_EXT_PANID, sizeof(aDataset.mExtendedPanId));
     aDataset.mComponents.mIsExtendedPanIdPresent = false;
 
     /* Set network key */
-    uint8_t key[OT_MASTER_KEY_SIZE] = {0x5c, 0xd9, 0x87, 0x02, 0xb2, 0x88, 0x5d, 0xb5, 0xe3, 0xdc, 0xba, 0x39, 0x58, 0xef, 0xd9, 0x2e}; //rpi2
-    //const char networkkey[] = "5cd98702b2885db5e3dcba3958efd92e", *pos = networkkey;
-    //unsigned char key[OT_MASTER_KEY_SIZE];
-
-    memcpy(aDataset.mMasterKey.m8, key, sizeof(aDataset.mMasterKey));
+    memcpy(aDataset.mMasterKey.m8, OT_CLAIRE_MASTER_KEY, sizeof(aDataset.mMasterKey));
     aDataset.mComponents.mIsMasterKeyPresent = true;
 
     /* Set Network Name */
-    size_t length = strlen(aNetworkName);
+    size_t length = strlen(OT_CLAIRE_NETWORK_NAME);
+    printf("network name length %lu, max: %lu\n", length, OT_NETWORK_NAME_MAX_SIZE);
     assert(length <= OT_NETWORK_NAME_MAX_SIZE);
-    memcpy(aDataset.mNetworkName.m8, aNetworkName, length);
+    memcpy(aDataset.mNetworkName.m8, OT_CLAIRE_NETWORK_NAME, sizeof(OT_CLAIRE_NETWORK_NAME));
     aDataset.mComponents.mIsNetworkNamePresent = true;
     
     printf("Set dataset with network key\n");
@@ -142,14 +138,13 @@ void handleNetifStateChanged(uint32_t aFlags, void *instance)
 }
 
 
-
 static void configCallback(const char *aTopic, const char *aMsg, uint16_t aMsgLength)
 {
     printf("Topic %s get message len = %d %s\r\n", aTopic, aMsgLength, aMsg);
 }
 
 
-void demo101Task(void *p)
+void mqttTask(void *p)
 {
     /* Override default network credentials */
     setNetworkConfiguration(otrGetInstance());
@@ -207,5 +202,8 @@ void demo101Task(void *p)
 
 void otrUserInit(void)
 {
-    xTaskCreate(demo101Task, "demo", 3000, &sDemoTask, 2, &sDemoTask);
+    sCloudIotCfg.mAddress         = CLOUDIOT_SERVER_ADDRESS;
+    sCloudIotCfg.mDeviceId        = CLOUDIOT_DEVICE_ID;
+
+    xTaskCreate(mqttTask, "mqtt", 3000, &sCloudIotCfg, 2, &sDemoTask);
 }

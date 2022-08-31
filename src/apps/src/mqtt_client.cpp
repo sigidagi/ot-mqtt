@@ -104,52 +104,6 @@ void IotMqttClient::MqttConnectChanged(mqtt_client_t *aClient, void *aArg, mqtt_
     }
 }
 
-static const char *CreateJwt(const char *aPrivKey, const char *aProjectId, jwt_alg_t aAlgorithm)
-{
-    char        iatTime[sizeof(uint64_t) * 3 + 2];
-    char        expTime[sizeof(uint64_t) * 3 + 2];
-    const char *key    = aPrivKey;
-    size_t      keyLen = strlen(aPrivKey) + 1;
-    jwt_t *     jwt    = NULL;
-    int         ret    = 0;
-    char *      out    = NULL;
-
-    // Get JWT parts
-    GetIatExp(iatTime, expTime, sizeof(iatTime));
-
-    jwt_new(&jwt);
-
-    // Write JWT
-    ret = jwt_add_grant(jwt, "iat", iatTime);
-    if (ret)
-    {
-        printf("Error setting issue timestamp: %d\r\n", ret);
-    }
-    ret = jwt_add_grant(jwt, "exp", expTime);
-    if (ret)
-    {
-        printf("Error setting expiration: %d\r\n", ret);
-    }
-    ret = jwt_add_grant(jwt, "aud", aProjectId);
-    if (ret)
-    {
-        printf("Error adding audience: %d\r\n", ret);
-    }
-    ret = jwt_set_alg(jwt, aAlgorithm, reinterpret_cast<const uint8_t *>(key), keyLen);
-    if (ret)
-    {
-        printf("Error during set alg: %d\r\n", ret);
-    }
-    out = jwt_encode_str(jwt);
-    if (!out)
-    {
-        printf("Error during token creation\r\n");
-    }
-
-    jwt_free(jwt);
-    return out;
-}
-
 IotMqttClient::IotMqttClient(const IotClientCfg &aConfig)
     : mConfig(aConfig)
     , mMqttClient(NULL)
@@ -165,13 +119,11 @@ int IotMqttClient::Connect(void)
 
     mMqttClient = mqtt_client_new();
     memset(&mClientInfo, 0, sizeof(mClientInfo));
-    mClientInfo.client_id   = mConfig.mClientId;
     mClientInfo.keep_alive  = 60;
     mClientInfo.client_user = NULL;
-    mClientInfo.client_pass = CreateJwt(mConfig.mPrivKey, mConfig.mProjectId, mConfig.mAlgorithm);
-    mClientInfo.tls_config  = altcp_tls_create_config_client_2wayauth(
-        NULL, 0, reinterpret_cast<const uint8_t *>(mConfig.mPrivKey), strlen(mConfig.mPrivKey) + 1, NULL, 0,
-        reinterpret_cast<const uint8_t *>(mConfig.mRootCertificate), strlen(mConfig.mRootCertificate) + 1);
+    
+    printf("Connecting to address %s\n", mConfig.mAddress);
+    //serverAddr.u_addr.ip6.  
 
     if (dnsNat64Address(mConfig.mAddress, &serverAddr.u_addr.ip6) == 0)
     {
@@ -194,6 +146,7 @@ int IotMqttClient::Connect(void)
     }
     else
     {
+        printf("Unable resolve dnsNAT64 address\n");
         ret = -1;
     }
 

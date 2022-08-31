@@ -30,8 +30,8 @@
 #define OTBR_RTOS_MQTT_CLIENT_HPP_
 
 #include "FreeRTOS.h"
-#include "jwt.h"
 #include "semphr.h"
+#include "mqtt_cfg.h"
 #include "lwip/apps/mqtt.h"
 
 namespace claire {
@@ -39,15 +39,7 @@ namespace claire {
 struct IotClientCfg
 {
     const char *mAddress;
-    const char *mClientId;
     const char *mDeviceId;
-    const char *mRegistryId;
-    const char *mProjectId;
-    const char *mRegion;
-    const char *mRootCertificate;
-    const char *mPrivKey;
-
-    jwt_alg_t mAlgorithm;
 };
 
 class IotMqttClient
