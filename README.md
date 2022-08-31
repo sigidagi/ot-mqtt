@@ -25,7 +25,7 @@ OpenThread RTOS includes a number of application-layer demonstrations, including
 
 ```sh
 git submodule update --init
-mkdir build && cd build
+cd build
 cmake .. -DPLATFORM_NAME=linux
 make -j12
 ```
@@ -36,34 +36,19 @@ This will build the CLI test application in `build/ot_cli_linux`.
 
 ```sh
 git submodule update --init
-mkdir build && cd build
-cmake .. -DCMAKE_TOOLCHAIN_FILE=../cmake/arm-none-eabi.cmake -DPLATFORM_NAME=nrf52
+cd build
+./configure
 make -j12
 ```
 
-This will build the CLI test application in `build/ot_cli_nrf52840.hex`. You can flash the binary with `nrfjprog`([Download](https://www.nordicsemi.com/Software-and-Tools/Development-Tools/nRF5-Command-Line-Tools)) and connecting to the nRF52840 DK serial port. This will also build the demo application in `build/ot_demo_101`. See the [Demo 101 README](examples/apps/demo_101/README.md) for a description of the demo application.
+This will build the CLI test application in `build/skyhome.hex`. You can flash the binary with `nrfjprog`([Download](https://www.nordicsemi.com/Software-and-Tools/Development-Tools/nRF5-Command-Line-Tools)) and connecting to the nRF52840 DK serial port.
 
-# Contributing
-
-We would love for you to contribute to OpenThread RTOS and help make it even better than it is today! See our [Contributing Guidelines](https://github.com/openthread/ot-rtos/blob/main/CONTRIBUTING.md) for more information.
-
-Contributors are required to abide by our [Code of Conduct](https://github.com/openthread/ot-rtos/blob/main/CODE_OF_CONDUCT.md) and [Coding Conventions and Style Guide](https://github.com/openthread/ot-rtos/blob/main/STYLE_GUIDE.md).
-
-We follow the philosophy of [Scripts to Rule Them All](https://github.com/github/scripts-to-rule-them-all).
 
 # License
 
 OpenThread RTOS is released under the [BSD 3-Clause license](https://github.com/openthread/ot-rtos/blob/main/LICENSE). See the [`LICENSE`](https://github.com/openthread/ot-rtos/blob/main/LICENSE) file for more information.
 
 Please only use the OpenThread name and marks when accurately referencing this software distribution. Do not use the marks in a way that suggests you are endorsed by or otherwise affiliated with Nest, Google, or The Thread Group.
-
-# Need help?
-
-OpenThread support is available on GitHub:
-
-- OpenThread RTOS bugs and feature requests — [submit to the openthread/ot-rtos Issue Tracker](https://github.com/openthread/ot-rtos/issues)
-- OpenThread bugs and feature requests — [submit to the OpenThread Issue Tracker](https://github.com/openthread/openthread/issues)
-- Community Discussion - [ask questions, share ideas, and engage with other community members](https://github.com/openthread/openthread/discussions)
 
 ## OpenThread
 

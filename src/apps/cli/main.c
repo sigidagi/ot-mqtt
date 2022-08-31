@@ -32,23 +32,8 @@
 #include <openthread/openthread-freertos.h>
 #include <openthread/platform/uart.h>
 
-#ifdef PLATFORM_linux
-#include <setjmp.h>
-#include <unistd.h>
-
-jmp_buf gResetJump;
-
-#endif
-
 int main(int argc, char *argv[])
 {
-#if PLATFORM_linux
-    if (setjmp(gResetJump))
-    {
-        alarm(0);
-        execvp(argv[0], argv);
-    }
-#endif
     otrInit(argc, argv);
     otCliUartInit(otrGetInstance());
     otrUserInit();

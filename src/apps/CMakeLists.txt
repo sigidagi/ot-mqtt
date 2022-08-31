@@ -29,18 +29,17 @@
 cmake_minimum_required (VERSION 3.7)
 
 
-if (${PLATFORM_NAME} STREQUAL nrf52)
-    add_library(libskyhome
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/skyhome.cpp
-    )
+add_library(libskyhome
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/skyhome.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/mqtt_client.cpp
+)
 
-    target_include_directories(libskyhome
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
+target_include_directories(libskyhome
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-    target_link_libraries(libskyhome
-        PUBLIC
-            otr_frameworks
-    )
-endif()
+target_link_libraries(libskyhome
+    PUBLIC
+        otr_frameworks
+)
