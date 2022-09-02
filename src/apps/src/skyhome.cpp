@@ -96,12 +96,12 @@ void setNetworkConfiguration(otInstance *aInstance)
 
     /* Set Network Name */
     size_t length = strlen(OT_CLAIRE_NETWORK_NAME);
-    printf("network name length %lu, max: %lu\n", length, OT_NETWORK_NAME_MAX_SIZE);
+    printf("network name length %lu, max: %lu\r\n", length, OT_NETWORK_NAME_MAX_SIZE);
     assert(length <= OT_NETWORK_NAME_MAX_SIZE);
     memcpy(aDataset.mNetworkName.m8, OT_CLAIRE_NETWORK_NAME, sizeof(OT_CLAIRE_NETWORK_NAME));
     aDataset.mComponents.mIsNetworkNamePresent = true;
     
-    printf("Set dataset with network key\n");
+    printf("Set dataset with network key\r\n");
     OT_API_CALL(otDatasetSetActive(aInstance, &aDataset));
     /* Set the router selection jitter to override the 2 minute default.
        CLI cmd > routerselectionjitter 20
@@ -156,7 +156,7 @@ void mqttTask(void *p)
     OT_API_CALL(otIp6SetEnabled(otrGetInstance(), true));
 
     // thread start
-    printf("Enable thread\n");
+    printf("Enable thread\r\n");
     OT_API_CALL(otThreadSetEnabled(otrGetInstance(), true));
     setupNat64();
 
@@ -164,24 +164,23 @@ void mqttTask(void *p)
     vTaskDelay(pdMS_TO_TICKS(2000));
 
     // dns64 www.google.com
-    printf("Connect mqtt client\n");
     //dnsNat64Address("www.google.com", &serverAddr.u_addr.ip6);
 
     claire::IotClientCfg *cfg = static_cast<claire::IotClientCfg *>(p);
-    char                     subTopic[claire::IotMqttClient::kTopicDataMaxLength];
-    int                      temperature = 0;
+    char subTopic[claire::IotMqttClient::kTopicDataMaxLength];
+    int  temperature = 0;
 
     claire::IotMqttClient client(*cfg);
     client.Connect();
 
     printf("Connect done\r\n");
+    
+    // TODO: later for control
+    //snprintf(subTopic, sizeof(subTopic), "claire/devices/%s/config", cfg->mDeviceId);
+    //printf("Subscribe to %s\n", subTopic);
+    //client.Subscribe(subTopic, configCallback);
 
-    snprintf(subTopic, sizeof(subTopic), "/devices/%s/config", cfg->mDeviceId);
-    printf("Subscribe to %s\n", subTopic);
-    client.Subscribe(subTopic, configCallback);
 
-
-    // periodically curl www.google.com
     while (true)
     {
         char pubTopic[claire::IotMqttClient::kTopicDataMaxLength];
@@ -189,11 +188,11 @@ void mqttTask(void *p)
 
         temperature++;
         temperature %= 20;
-        snprintf(pubTopic, sizeof(pubTopic), "/devices/%s/events", cfg->mDeviceId);
+        snprintf(pubTopic, sizeof(pubTopic), "claire/%s/temperature", cfg->mDeviceId);
         snprintf(msg, sizeof(msg), "{\"temperature\": %d}", temperature - 5);
         client.Publish(pubTopic, msg, strlen(msg));
         printf("Publish message: %s\r\n", msg);
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(5000));
     }
 
     vTaskDelete(NULL);
@@ -203,7 +202,11 @@ void mqttTask(void *p)
 void otrUserInit(void)
 {
     sCloudIotCfg.mAddress         = CLOUDIOT_SERVER_ADDRESS;
+    sCloudIotCfg.mPort            = CLOUDIOT_SERVER_PORT;
     sCloudIotCfg.mDeviceId        = CLOUDIOT_DEVICE_ID;
+    sCloudIotCfg.mClientId        = CLOUDIOT_CLIENT_ID;
+    sCloudIotCfg.mUser            = CLOUDIOT_SERVER_USER;
+    sCloudIotCfg.mPassword        = CLOUDIOT_SERVER_PASS;
 
     xTaskCreate(mqttTask, "mqtt", 3000, &sCloudIotCfg, 2, &sDemoTask);
 }

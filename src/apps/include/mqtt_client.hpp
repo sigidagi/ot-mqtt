@@ -39,7 +39,11 @@ namespace claire {
 struct IotClientCfg
 {
     const char *mAddress;
+    int        mPort;
     const char *mDeviceId;
+    const char *mClientId;  
+    const char *mUser;
+    const char *mPassword;
 };
 
 class IotMqttClient
@@ -56,7 +60,6 @@ public:
 
     static const size_t   kTopicNameMaxLength = 50;
     static const size_t   kTopicDataMaxLength = 201;
-    static const uint16_t kMqttPort           = 1883;
 
 private:
     static void MqttPubSubChanged(void *aArg, err_t aResult);

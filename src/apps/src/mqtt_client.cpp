@@ -70,13 +70,9 @@ static void GetIatExp(char *aIat, char *aExt, int time_size)
 {
     time_t now_seconds = timeNtp();
 
-#ifdef PLATFORM_linux
-    snprintf(aIat, (size_t)time_size, "%zu", static_cast<size_t>(now_seconds));
-    snprintf(aExt, (size_t)time_size, "%zu", static_cast<size_t>(now_seconds + 3600));
-#else // arm gcc has some problems handling %zu
+    // arm gcc has some problems handling %zu
     snprintf(aIat, (size_t)time_size, "%lu", static_cast<size_t>(now_seconds));
     snprintf(aExt, (size_t)time_size, "%lu", static_cast<size_t>(now_seconds + 3600));
-#endif
 }
 
 void IotMqttClient::MqttPubSubChanged(void *aArg, err_t aResult)
@@ -88,14 +84,18 @@ void IotMqttClient::MqttPubSubChanged(void *aArg, err_t aResult)
 
 void IotMqttClient::MqttConnectChanged(mqtt_client_t *aClient, void *aArg, mqtt_connection_status_t aResult)
 {
+    printf("MqttConnectChanged callback, result: '%d'\r\n", aResult);
     (void)aClient;
 
     ConnectContext *ctx = static_cast<ConnectContext *>(aArg);
+    
+
 
     if (aResult == MQTT_CONNECT_ACCEPTED)
     {
         printf("Mqtt Connected\r\n");
     }
+    
 
     if (aResult != MQTT_CONNECT_DISCONNECTED)
     {
@@ -119,14 +119,24 @@ int IotMqttClient::Connect(void)
 
     mMqttClient = mqtt_client_new();
     memset(&mClientInfo, 0, sizeof(mClientInfo));
+    mClientInfo.client_id   = mConfig.mClientId;
     mClientInfo.keep_alive  = 60;
-    mClientInfo.client_user = NULL;
+    mClientInfo.client_user = mConfig.mUser;
+    mClientInfo.client_pass = mConfig.mPassword;
     
-    printf("Connecting to address %s\n", mConfig.mAddress);
-    //serverAddr.u_addr.ip6.  
+    printf("Connecting to address: %s, port: %d\r\n", mConfig.mAddress, mConfig.mPort);
+    printf("User: %s, passw: %s\r\n", mConfig.mUser, mConfig.mPassword);
+    
+    //ip4_addr_t mosquittoAddr;
+    //mosquittoAddr.addr = inet_pton(AF_INET, mConfig.mAddress, &mosquittoAddr.addr);
+
+    //serverAddr.u_addr.ip6 = getNat64Address(&mosquittoAddr);
+    //inet_pton(AF_INET6, "64:ff9b::c0a8:3253", &serverAddr.u_addr.ip6);
+    //serverAddr.u_addr.ip6.zone = IP6_NO_ZONE; 
 
     if (dnsNat64Address(mConfig.mAddress, &serverAddr.u_addr.ip6) == 0)
     {
+        printf("Good, dnsNat64 translation\r\n");
         struct ConnectContext ctx;
 
         ctx.mClient     = this;
@@ -134,7 +144,7 @@ int IotMqttClient::Connect(void)
         serverAddr.type = IPADDR_TYPE_V6;
 
         LOCK_TCPIP_CORE();
-        mqtt_client_connect(mMqttClient, &serverAddr, kMqttPort, &IotMqttClient::MqttConnectChanged, &ctx,
+        mqtt_client_connect(mMqttClient, &serverAddr, mConfig.mPort, &IotMqttClient::MqttConnectChanged, &ctx,
                             &mClientInfo);
         UNLOCK_TCPIP_CORE();
 
@@ -144,9 +154,10 @@ int IotMqttClient::Connect(void)
         }
         ret = (mConnectResult == 0) ? 0 : -1;
     }
+    //if (ret == -1) 
     else
     {
-        printf("Unable resolve dnsNAT64 address\n");
+        printf("Unable resolve dnsNAT64 address\r\n");
         ret = -1;
     }
 
