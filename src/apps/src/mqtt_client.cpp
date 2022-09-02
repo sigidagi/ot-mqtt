@@ -121,19 +121,24 @@ int IotMqttClient::Connect(void)
     memset(&mClientInfo, 0, sizeof(mClientInfo));
     mClientInfo.client_id   = mConfig.mClientId;
     mClientInfo.keep_alive  = 60;
-    mClientInfo.client_user = mConfig.mUser;
-    mClientInfo.client_pass = mConfig.mPassword;
+    if (strlen(mConfig.mUser) == 0) {
+        mClientInfo.client_user = NULL;
+    }
+    else {
+        mClientInfo.client_user = mConfig.mUser;
+    }
+    if (strlen(mConfig.mPassword) == 0) {
+        mClientInfo.client_pass = NULL;
+    }
+    else {
+        mClientInfo.client_pass = mConfig.mPassword;
+    }
     
     printf("Connecting to address: %s, port: %d\r\n", mConfig.mAddress, mConfig.mPort);
-    printf("User: %s, passw: %s\r\n", mConfig.mUser, mConfig.mPassword);
+    //printf("User: %s, passw: %s\r\n", mConfig.mUser, mConfig.mPassword);
     
-    //ip4_addr_t mosquittoAddr;
-    //mosquittoAddr.addr = inet_pton(AF_INET, mConfig.mAddress, &mosquittoAddr.addr);
-
-    //serverAddr.u_addr.ip6 = getNat64Address(&mosquittoAddr);
     //inet_pton(AF_INET6, "64:ff9b::c0a8:3253", &serverAddr.u_addr.ip6);
     //serverAddr.u_addr.ip6.zone = IP6_NO_ZONE; 
-
     if (dnsNat64Address(mConfig.mAddress, &serverAddr.u_addr.ip6) == 0)
     {
         printf("Good, dnsNat64 translation\r\n");
@@ -157,7 +162,7 @@ int IotMqttClient::Connect(void)
     //if (ret == -1) 
     else
     {
-        printf("Unable resolve dnsNAT64 address\r\n");
+        printf("Unable resolve address: %s\r\n", mConfig.mAddress);
         ret = -1;
     }
 
